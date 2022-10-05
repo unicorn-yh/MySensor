@@ -27,7 +27,7 @@
         android:id="@+id/namestr"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="visible"
+        android:visibility="invisible"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -37,7 +37,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="130dp"
         android:layout_marginLeft="130dp"
-        android:layout_marginTop="500dp"
+        android:layout_marginTop="550dp"
         android:clickable="true"
         android:text="Update Status"
         android:visibility="visible"

@@ -3,6 +3,8 @@ package com.example.mysensor.ui.dashboard;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -55,7 +57,14 @@ public class DashboardFragment extends Fragment {
             }
         });
 
+        if(sharedViewModel.data == ""){
+            sharedViewModel.data = getData();
+            binding.data.setText(sharedViewModel.data);
+        }
+
         setupData();
+        updateData();
+        fillInData();
         //setSensorName();
 
         //final TextView textView = binding.textDashboard;
@@ -144,7 +153,7 @@ public class DashboardFragment extends Fragment {
                 //intensity
                 EditText intensity = new EditText(table.getContext());
                 intensity.setLayoutParams(new TableRow.LayoutParams(145, GridLayout.LayoutParams.MATCH_PARENT));
-                intensity.setPadding(145,10,0,20);
+                intensity.setPadding(135,10,0,20);
                 intensity.setTextSize(20);
                 intensity.setText("0");
                 intensity.setTypeface(null, Typeface.NORMAL);
@@ -152,7 +161,7 @@ public class DashboardFragment extends Fragment {
                 //resistance
                 EditText resistance = new EditText(table.getContext());
                 resistance.setLayoutParams(new TableRow.LayoutParams(145, GridLayout.LayoutParams.MATCH_PARENT));
-                resistance.setPadding(95,10,0,20);
+                resistance.setPadding(80,10,0,20);
                 resistance.setTextSize(20);
                 resistance.setText("0");
                 resistance.setTypeface(null, Typeface.NORMAL);
@@ -164,6 +173,100 @@ public class DashboardFragment extends Fragment {
                 table.addView(tr, new TableLayout.LayoutParams(GridLayout.LayoutParams.MATCH_PARENT, GridLayout.LayoutParams.MATCH_PARENT));
             }
 
+            for(int i=0;i<sharedViewModel.increment;i++){
+                sharedViewModel.data += "0,0;";
+            }
+
+        }
+        binding.data.setText(sharedViewModel.data);
+    }
+
+    /*public void fillZero(){
+        TableLayout table = binding.tableLayout2;
+        for(int i=1;i<table.getChildCount();i++){
+            TableRow tr = (TableRow) table.getChildAt(i);
+            TextView intensity = (TextView) tr.getChildAt(1);
+            TextView resistance = (TextView) tr.getChildAt(2);
+            if(intensity.getText().toString() == ""){
+                intensity.setText("0");
+            }
+            if(resistance.getText().toString() == ""){
+                resistance.setText("0");
+            }
+        }
+    }*/
+
+    public void updateData(){
+        TableLayout table = binding.tableLayout2;
+        int len = table.getChildCount();
+
+        for(int i=1;i<len;i++){
+            TableRow tr = (TableRow) table.getChildAt(i);
+            TextView tv1 = (TextView) tr.getChildAt(1);
+            TextView tv2 = (TextView) tr.getChildAt(2);
+
+            //actionlistener for intensity
+            tv1.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    sharedViewModel.data = getData();
+                    binding.data.setText(sharedViewModel.data);
+                }
+            });
+
+            //actionlister for resistance
+            tv2.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    sharedViewModel.data = getData();
+                    binding.data.setText(sharedViewModel.data);
+                    //send data to sensor
+
+                }
+            });
         }
     }
+
+    public void fillInData(){
+        TableLayout table = binding.tableLayout2;
+        String[][] arr = new String[table.getChildCount()-1][2];
+
+        //get data
+        String[] dataarr = sharedViewModel.data.split("[;]", 0);  //each row data
+        for(int i=0;i<dataarr.length;i++){
+            String[] tmp = dataarr[i].split("[,]", 0);  //split into intensity and resistance
+            arr[i][0] = tmp[0];
+            arr[i][1] = tmp[1];
+        }
+
+        //insert data into table
+        for(int i=1;i<table.getChildCount();i++){
+            TableRow tr = (TableRow) table.getChildAt(i);
+            TextView intensity = (TextView) tr.getChildAt(1);
+            TextView resistance = (TextView) tr.getChildAt(2);
+            intensity.setText(arr[i-1][0]);
+            resistance.setText(arr[i-1][1]);
+        }
+    }
+
 }

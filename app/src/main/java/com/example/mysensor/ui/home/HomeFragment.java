@@ -21,6 +21,9 @@ import com.google.android.material.chip.*;
 import android.widget.GridLayout.LayoutParams;
 import android.content.res.ColorStateList;
 import androidx.core.content.ContextCompat;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 //import com.example.mysensor.ui.dashboard.DashboardFragment;
 
@@ -51,6 +54,7 @@ public class HomeFragment extends Fragment {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
         table = binding.tableLayout;
+        sharedViewModel.increment = 0;
 
         //get data from dashboard
         getParentFragmentManager().setFragmentResultListener("dataFrom1", this, new FragmentResultListener() {
@@ -71,6 +75,7 @@ public class HomeFragment extends Fragment {
         retainTable();
         setupSensor();
         setupChip();
+        sendRowSignal();
         //sendTableSignal();
         setupAddButton();
         setupUpdate();
@@ -155,7 +160,8 @@ public class HomeFragment extends Fragment {
                 arr[i][j] = 0;
             }
         }
-        String datastr = binding.dataFrom1.getText().toString();
+        //String datastr = binding.dataFrom1.getText().toString();
+        String datastr = sharedViewModel.data;
         if (datastr == "") {
             binding.statusstr.setText(sharedViewModel.statusstr);
             return;
@@ -183,6 +189,10 @@ public class HomeFragment extends Fragment {
                         signaltxt.setTextColor(Color.RED);
                         signaltxt.setTypeface(null, Typeface.BOLD);
                         sharedViewModel.statusstr += "Signal detected.;";
+                        sharedViewModel.detectionstr += Integer.toString(i+1)+";";
+                        DateFormat dateFormat = new SimpleDateFormat("hh.mm aa");
+                        String dateString = dateFormat.format(new Date()).toString();
+                        sharedViewModel.detectiontime += dateString;
                     }
                     else{
                         signaltxt.setText("No signal.");
@@ -200,7 +210,6 @@ public class HomeFragment extends Fragment {
             }
         }
         binding.statusstr.setText(sharedViewModel.statusstr);
-        binding.namestr.setText(sharedViewModel.checkstr);
     }
 
     public void sendTableSignal(){
@@ -254,6 +263,8 @@ public class HomeFragment extends Fragment {
             public void onClick(View view) {
                 addRow();
                 sharedViewModel.real_data_count++;
+                sharedViewModel.increment++;
+                binding.namestr.setText(Integer.toString(sharedViewModel.increment));
                 setupChip();
             }
         });
@@ -309,24 +320,31 @@ public class HomeFragment extends Fragment {
         upbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String[] checkarr = sharedViewModel.checkstr.split("[;]",0);
-                for(int i=0;i<table.getChildCount();i++){
-                    TableRow row = (TableRow) table.getChildAt(i);
-                    Chip c = (Chip) row.getChildAt(1);
-                    //int num = Integer.parseInt(checkarr[i]);
-                    //if(i == Integer.parseInt(checkarr[i])){}
-                    //if(checkarr[i].equals(Integer.toString(i)))
-                        /*c.setChecked(true);
-                        flag = true;
-                    }
-                    if (flag == false){
-                        c.setChecked(false);
-                        flag = true;
-                    }*/
-                }
-                //sendRowSignal();
+                setcheck();
+                sendRowSignal();
             }
         });
+    }
+    public void setcheck(){
+        if (sharedViewModel.checkstr == ""){
+            return;
+        }
+        int len = table.getChildCount();
+        Chip[] c = new Chip[len];
+        for(int i=0;i<len;i++){
+            TableRow tr = (TableRow) table.getChildAt(i);
+            Chip ct = (Chip) tr.getChildAt(1);
+            c[i] = ct;
+        }
+        String[] checkarr = sharedViewModel.checkstr.split("[;]",0);
+        for(int i=0;i< checkarr.length;i++){
+            if(checkarr[i].equals("true")){
+                c[i].setChecked(true);
+            }
+            else{
+                c[i].setChecked(false);
+            }
+        }
     }
 
     public void signalupdate(){
