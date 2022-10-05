@@ -3,6 +3,7 @@ package com.example.mysensor.ui.dashboard;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,11 +21,13 @@ import androidx.fragment.app.FragmentResultListener;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.mysensor.R;
+import com.example.mysensor.SharedViewModel;
 import com.example.mysensor.databinding.FragmentDashboardBinding;
 
 public class DashboardFragment extends Fragment {
 
     private FragmentDashboardBinding binding;
+    private SharedViewModel sharedViewModel;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -34,18 +37,14 @@ public class DashboardFragment extends Fragment {
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        Button updatebtn = binding.updatebtn;
-        updatebtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                TableLayout table = binding.tableLayout2;
-                String datastr = getData();
-                Bundle result = new Bundle();
-                result.putString("df1",datastr);
-                getParentFragmentManager().setFragmentResult("dataFrom1",result);
+        sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
+        Log.i("DataActivity","SharedViewModel is Initialized.");
 
-            }
-        });
+        //send data to home
+        String datastr = getData();
+        Bundle result = new Bundle();
+        result.putString("df1",datastr);
+        getParentFragmentManager().setFragmentResult("dataFrom1",result);
 
         //get name from home
         getParentFragmentManager().setFragmentResultListener("dataName", this, new FragmentResultListener() {
@@ -56,7 +55,7 @@ public class DashboardFragment extends Fragment {
             }
         });
 
-        //setupData();
+        setupData();
         //setSensorName();
 
         //final TextView textView = binding.textDashboard;
@@ -64,11 +63,11 @@ public class DashboardFragment extends Fragment {
         return root;
     }
 
-    @Override
+    /*@Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-    }
+    }*/
 
     public void setSensorName(){
         String namestr = binding.dataName.getText().toString();
@@ -107,67 +106,64 @@ public class DashboardFragment extends Fragment {
     }
 
     public void setupData(){
-        Button upbtn = binding.updatebtn;
-        upbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String namestr = binding.dataName.getText().toString();
-                if(namestr == "") {
-                    binding.textView12.setText("*");
-                    return;
-                }
-                String[] namearr = namestr.split("[;]", 0);
-                TableLayout table = binding.tableLayout2;
-                int data_count = table.getChildCount()-1;
-                int i = 1;
-                //renew sensor name
-                for(i=1;i<data_count;i++) {
-                    TableRow row = (TableRow) table.getChildAt(i);
-                    TextView t = (TextView) row.getChildAt(0);
-                    t.setText(namearr[i-1]);
-                }
+       /* String namestr = binding.dataName.getText().toString();
+        if(namestr == "") {
+            binding.textView12.setText("*");
+            return;
+        }
+        String[] namearr = namestr.split("[;]", 0);
+        TableLayout table = binding.tableLayout2;
+        int data_count = table.getChildCount()-1;
+        int i = 1;
+        //renew sensor name
+        for(i=1;i<data_count;i++) {
+            TableRow row = (TableRow) table.getChildAt(i);
+            TextView t = (TextView) row.getChildAt(0);
+            t.setText(namearr[i-1]);
+        }*/
 
-                //add new row
-                int diff = namearr.length-data_count;
-                if(diff > 0){
-                    for(int j=0;j<diff;j++){
-                        TableRow tr = new TableRow(table.getContext());
-                        tr.setLayoutParams(new TableRow.LayoutParams(GridLayout.LayoutParams.MATCH_PARENT, GridLayout.LayoutParams.MATCH_PARENT));
+        int add_data_count = sharedViewModel.real_data_count;
+        if(add_data_count == 0) return;
 
-                        //sensor name
-                        TextView name = new TextView(table.getContext());
-                        name.setText(namearr[i++]);
-                        name.setLayoutParams(new TableRow.LayoutParams(160, GridLayout.LayoutParams.MATCH_PARENT));
-                        name.setPadding(92,30,0,0);
-                        name.setTextSize(20);
-                        name.setTypeface(null, Typeface.BOLD);
+        //add new row
+        else{
+            TableLayout table = binding.tableLayout2;
+            int beforecount = table.getChildCount();
+            for(int j=0;j<add_data_count;j++){
+                TableRow tr = new TableRow(table.getContext());
+                tr.setLayoutParams(new TableRow.LayoutParams(GridLayout.LayoutParams.MATCH_PARENT, GridLayout.LayoutParams.MATCH_PARENT));
 
-                        //intensity
-                        EditText intensity = new EditText(table.getContext());
-                        intensity.setLayoutParams(new TableRow.LayoutParams(145, GridLayout.LayoutParams.MATCH_PARENT));
-                        intensity.setPadding(145,10,0,20);
-                        intensity.setTextSize(20);
-                        intensity.setText("0");
-                        intensity.setTypeface(null, Typeface.NORMAL);
+                //sensor name
+                TextView name = new TextView(table.getContext());
+                name.setText("Sensor "+Integer.toString(beforecount+j));
+                name.setLayoutParams(new TableRow.LayoutParams(160, GridLayout.LayoutParams.MATCH_PARENT));
+                name.setPadding(92,30,0,0);
+                name.setTextSize(20);
+                name.setTypeface(null, Typeface.BOLD);
 
-                        //resistance
-                        EditText resistance = new EditText(table.getContext());
-                        resistance.setLayoutParams(new TableRow.LayoutParams(145, GridLayout.LayoutParams.MATCH_PARENT));
-                        resistance.setPadding(95,10,0,20);
-                        resistance.setTextSize(20);
-                        resistance.setText("0");
-                        resistance.setTypeface(null, Typeface.NORMAL);
+                //intensity
+                EditText intensity = new EditText(table.getContext());
+                intensity.setLayoutParams(new TableRow.LayoutParams(145, GridLayout.LayoutParams.MATCH_PARENT));
+                intensity.setPadding(145,10,0,20);
+                intensity.setTextSize(20);
+                intensity.setText("0");
+                intensity.setTypeface(null, Typeface.NORMAL);
 
-                        //add to row and table
-                        tr.addView(name);
-                        tr.addView(intensity);
-                        tr.addView(resistance);
-                        table.addView(tr, new TableLayout.LayoutParams(GridLayout.LayoutParams.MATCH_PARENT, GridLayout.LayoutParams.MATCH_PARENT));
-                    }
+                //resistance
+                EditText resistance = new EditText(table.getContext());
+                resistance.setLayoutParams(new TableRow.LayoutParams(145, GridLayout.LayoutParams.MATCH_PARENT));
+                resistance.setPadding(95,10,0,20);
+                resistance.setTextSize(20);
+                resistance.setText("0");
+                resistance.setTypeface(null, Typeface.NORMAL);
 
-                }
-
+                //add to row and table
+                tr.addView(name);
+                tr.addView(intensity);
+                tr.addView(resistance);
+                table.addView(tr, new TableLayout.LayoutParams(GridLayout.LayoutParams.MATCH_PARENT, GridLayout.LayoutParams.MATCH_PARENT));
             }
-        });
+
+        }
     }
 }

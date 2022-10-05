@@ -6,6 +6,15 @@
     android:layout_height="match_parent"
     android:paddingTop="?attr/actionBarSize">
 
+    <TextView
+        android:id="@+id/datanav"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        android:text="nnn"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/nav_view"
         android:layout_width="0dp"
