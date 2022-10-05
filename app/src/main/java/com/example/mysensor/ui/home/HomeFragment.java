@@ -192,7 +192,7 @@ public class HomeFragment extends Fragment {
                         sharedViewModel.detectionstr += Integer.toString(i+1)+";";
                         DateFormat dateFormat = new SimpleDateFormat("hh.mm aa");
                         String dateString = dateFormat.format(new Date()).toString();
-                        sharedViewModel.detectiontime += dateString;
+                        sharedViewModel.detectiontime += dateString+";";
                     }
                     else{
                         signaltxt.setText("No signal.");
