@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -32,6 +33,7 @@ import androidx.core.content.ContextCompat;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 //import com.example.mysensor.ui.dashboard.DashboardFragment;
 
 import androidx.annotation.NonNull;
@@ -50,6 +52,8 @@ public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
     private SharedViewModel sharedViewModel;
     private TableLayout table;
+    private int trigger = 0;
+    private Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -69,21 +73,41 @@ public class HomeFragment extends Fragment {
             sharedViewModel.firstlaunch++;
         }
 
+        binding.namestr.setText(Integer.toString(++sharedViewModel.firstlaunch));
+        binding.namestr.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                binding.updatebtn2.performClick();
+            }
+        });
+
+
         //set fragment to immersive mode
-        /*root.setSystemUiVisibility(
+        root.setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE );
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
-        binding.updatebtn2.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
+        //perform click to button
+        //View decorView = getActivity().getWindow().getDecorView();
+        /*root.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
             @Override
             public void onSystemUiVisibilityChange(int i) {
                 binding.updatebtn2.performClick();
             }
         });*/
+
+
 
 
         //get data from dashboard
@@ -92,6 +116,7 @@ public class HomeFragment extends Fragment {
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
                 String datastr = result.getString("df1");
                 binding.dataFrom1.setText(datastr);
+                binding.updatebtn2.performClick();
             }
         });
 
@@ -120,6 +145,13 @@ public class HomeFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    public boolean isNumeric(String strNum) {
+        if (strNum == null) {
+            return false;
+        }
+        return pattern.matcher(strNum).matches();
     }
 
     public void saveData(){
@@ -209,9 +241,15 @@ public class HomeFragment extends Fragment {
             return false;
         }
 
-        if (intensity<=Double.parseDouble(sharedViewModel.intensity_constraint) && RR>=Double.parseDouble(sharedViewModel.r_constraint)){
-            return true;
+        try{
+            if (intensity<=Double.parseDouble(sharedViewModel.intensity_constraint) && RR>=Double.parseDouble(sharedViewModel.r_constraint)){
+                return true;
+            }
         }
+        catch (Exception e){
+            return false;
+        }
+
         return false;
     }
 
@@ -229,15 +267,25 @@ public class HomeFragment extends Fragment {
         //String datastr = binding.dataFrom1.getText().toString();
         String datastr = sharedViewModel.data;
         if (datastr == "") {
-            binding.statusstr.setText(sharedViewModel.statusstr);
+            //binding.statusstr.setText(sharedViewModel.statusstr);
             return;
         }
         else{
             String[] dataarr = datastr.split("[;]", 0);  //each row data
             for(int i=0;i<dataarr.length;i++){
                 String[] tmp = dataarr[i].split("[,]", 0);  //split into intensity and resistance
-                arr[i][0] = Double.parseDouble(tmp[0]);
-                arr[i][1] = Double.parseDouble(tmp[1]);
+                if(tmp[0] == "" || !isNumeric(tmp[0])){
+                    arr[i][0] = 0;
+                }
+                else{
+                    arr[i][0] = Double.parseDouble(tmp[0]);
+                }
+                if(tmp[1] == "" || !isNumeric(tmp[1])){
+                    arr[i][1] = 0;
+                }
+                else{
+                    arr[i][1] = Double.parseDouble(tmp[1]);
+                }
             }
         }
 
@@ -278,7 +326,6 @@ public class HomeFragment extends Fragment {
             }
         }
         saveData();
-
     }
 
     public void sendTableSignal(){
@@ -349,7 +396,8 @@ public class HomeFragment extends Fragment {
         String sname = "Sensor "+Integer.toString(data_count+1);
         name.setText(sname);
         name.setLayoutParams(new TableRow.LayoutParams(160,LayoutParams.MATCH_PARENT));
-        name.setPadding(92,18,0,0);
+        name.setPadding(0,18,0,0);
+        name.setGravity(Gravity.CENTER);
         name.setTextSize(20);
         name.setTypeface(null,Typeface.BOLD);
 

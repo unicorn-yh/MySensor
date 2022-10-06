@@ -26,6 +26,8 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.mysensor.SharedViewModel;
 import com.example.mysensor.databinding.FragmentNotificationsBinding;
 
+import java.util.Locale;
+
 public class NotificationsFragment extends Fragment {
 
     private FragmentNotificationsBinding binding;
@@ -42,11 +44,16 @@ public class NotificationsFragment extends Fragment {
         binding = FragmentNotificationsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        /*root.setSystemUiVisibility(
+        //send data to home
+        String datastr = "random";
+        Bundle result = new Bundle();
+        result.putString("df1",datastr);
+        getParentFragmentManager().setFragmentResult("dataFrom1",result);
+
+        root.setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE);*/
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
         getDetectionRecord();
 
@@ -116,7 +123,7 @@ public class NotificationsFragment extends Fragment {
             TextView detection = (TextView) tr.getChildAt(0);
             TextView time = (TextView) tr.getChildAt(1);
             detection.setText("Sensor "+device[num]+" detected.");
-            time.setText(dtime[num++]);
+            time.setText(dtime[num++].toUpperCase(Locale.ROOT));
         }
     }
 }
