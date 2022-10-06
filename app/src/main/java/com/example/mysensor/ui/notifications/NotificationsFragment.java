@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,6 +42,12 @@ public class NotificationsFragment extends Fragment {
         binding = FragmentNotificationsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
+        root.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
+
         getDetectionRecord();
 
         //final TextView textView = binding.textNotifications;
@@ -71,14 +78,15 @@ public class NotificationsFragment extends Fragment {
             //detection msg
             TextView msg = new TextView(table.getContext());
             msg.setLayoutParams(new TableRow.LayoutParams(270, 90));
-            msg.setPadding(0, 5, 0, 0);
-            msg.setTextSize(20);
+            msg.setPadding(55, 10, 0, 0);
+            msg.setTextSize(16);
             msg.setTextColor(Color.BLACK);
 
             //detection time
             TextView time = new TextView(table.getContext());
+            time.setGravity(Gravity.CENTER);
             time.setLayoutParams(new TableRow.LayoutParams(GridLayout.LayoutParams.WRAP_CONTENT, GridLayout.LayoutParams.WRAP_CONTENT));
-            time.setTextSize(20);
+            time.setTextSize(16);
 
             //add to row and table
             tr.addView(msg);
@@ -107,7 +115,7 @@ public class NotificationsFragment extends Fragment {
             TableRow tr = (TableRow) v;
             TextView detection = (TextView) tr.getChildAt(0);
             TextView time = (TextView) tr.getChildAt(1);
-            detection.setText("Sensor "+device[num]+" signal detected.");
+            detection.setText("Sensor "+device[num]+" detected.");
             time.setText(dtime[num++]);
         }
     }

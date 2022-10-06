@@ -7,10 +7,13 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Space;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TableRow;
 import android.widget.TableLayout;
@@ -29,6 +32,7 @@ import java.util.*;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentResultListener;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -45,6 +49,7 @@ public class HomeFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
+
         HomeViewModel homeViewModel =
                 new ViewModelProvider(this).get(HomeViewModel.class);
 
@@ -55,6 +60,23 @@ public class HomeFragment extends Fragment {
         View root = binding.getRoot();
         table = binding.tableLayout;
         sharedViewModel.increment = 0;
+
+        //set fragment to immersive mode
+        root.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE );
+
+        binding.updatebtn2.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
+            @Override
+            public void onSystemUiVisibilityChange(int i) {
+                binding.updatebtn2.performClick();
+            }
+        });
+
 
         //get data from dashboard
         getParentFragmentManager().setFragmentResultListener("dataFrom1", this, new FragmentResultListener() {
@@ -73,14 +95,13 @@ public class HomeFragment extends Fragment {
 
         //send signal
         retainTable();
-        setupSensor();
+        //setupSensor();
         setupChip();
-        sendRowSignal();
         //sendTableSignal();
         setupAddButton();
         setupUpdate();
         signalupdate();
-        getSensorName();
+        //getSensorName();
 
         //final TextView textView = binding.textView;
         //homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
@@ -175,41 +196,42 @@ public class HomeFragment extends Fragment {
             }
         }
 
+        String beforestr = sharedViewModel.statusstr;
+        String[] beforestatus = new String[data_count];
+        if(sharedViewModel.statusstr != "") {
+            beforestatus = sharedViewModel.statusstr.split("[;]",0);
+        }
+
         //output result from data
         sharedViewModel.statusstr = "";
         for(int i=0;i<data_count;i++) {
             TableRow row = (TableRow) table.getChildAt(i);
-            if (true){
-                Chip c = (Chip) row.getChildAt(1);
-                TextView signaltxt = (TextView) row.getChildAt(3);
-                if (c.isChecked()){
-                    //tmp = dataarr[i].split("[,]",0);
-                    if (detectSignal(arr[i][0],arr[i][1]) ){
-                        signaltxt.setText("Signal detected.");
-                        signaltxt.setTextColor(Color.RED);
-                        signaltxt.setTypeface(null, Typeface.BOLD);
-                        sharedViewModel.statusstr += "Signal detected.;";
+            Chip c = (Chip) row.getChildAt(1);
+            TextView signaltxt = (TextView) row.getChildAt(3);
+            if (c.isChecked()){
+                if (detectSignal(arr[i][0],arr[i][1]) ){
+                    signaltxt.setText("Signal detected.");
+                    signaltxt.setTextColor(Color.RED);
+                    signaltxt.setTypeface(null, Typeface.BOLD);
+                    sharedViewModel.statusstr += "Signal detected.;";
+                    if(beforestr == "" || beforestatus[i].equals("No signal.")){
                         sharedViewModel.detectionstr += Integer.toString(i+1)+";";
                         DateFormat dateFormat = new SimpleDateFormat("hh.mm aa");
                         String dateString = dateFormat.format(new Date()).toString();
                         sharedViewModel.detectiontime += dateString+";";
                     }
-                    else{
-                        signaltxt.setText("No signal.");
-;                       signaltxt.setTextColor(Color.GRAY);
-                        signaltxt.setTypeface(null);
-                        sharedViewModel.statusstr += "No signal.;";
-                    }
                 }
                 else{
                     signaltxt.setText("No signal.");
-                    signaltxt.setTextColor(Color.GRAY);
+                    ;                       signaltxt.setTextColor(Color.GRAY);
                     signaltxt.setTypeface(null);
                     sharedViewModel.statusstr += "No signal.;";
                 }
             }
+            else{
+                sharedViewModel.statusstr += "No signal.;";
+            }
         }
-        binding.statusstr.setText(sharedViewModel.statusstr);
     }
 
     public void sendTableSignal(){
@@ -227,13 +249,9 @@ public class HomeFragment extends Fragment {
             c.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if(c.isChecked()){
-                        updateCheck();
-                    }
-                    else{
-                       updateCheck();
-                    }
+                    updateCheck();
                     sendRowSignal();
+                    signalupdate();
                 }
             });
         }
@@ -241,10 +259,12 @@ public class HomeFragment extends Fragment {
 
     public void updateCheck(){
         sharedViewModel.checkstr = "";
+        Chip[] chips = new Chip[table.getChildCount()];
         for(int i=0;i<table.getChildCount();i++) {
             final int num = i;
             TableRow row = (TableRow) table.getChildAt(i);
             Chip c = (Chip) row.getChildAt(1);
+            chips[i] = c;
             if(c.isChecked()){
                 sharedViewModel.checkstr += "true;";
             }
@@ -252,9 +272,8 @@ public class HomeFragment extends Fragment {
                 sharedViewModel.checkstr += "false;";
             }
         }
+        //sharedViewModel.chips = Arrays.copyOf(chips, chips.length);
     }
-
-
 
     public void setupAddButton(){
         FloatingActionButton addbtn = binding.addbtn;
@@ -264,7 +283,7 @@ public class HomeFragment extends Fragment {
                 addRow();
                 sharedViewModel.real_data_count++;
                 sharedViewModel.increment++;
-                binding.namestr.setText(Integer.toString(sharedViewModel.increment));
+                binding.scroll.fullScroll(View.FOCUS_DOWN);
                 setupChip();
             }
         });
@@ -289,6 +308,7 @@ public class HomeFragment extends Fragment {
         Chip c = new Chip(table.getContext());
         c.setLayoutParams(new TableRow.LayoutParams(80,LayoutParams.WRAP_CONTENT));
         c.setCheckable(true);
+        c.onSaveInstanceState();
         c.setPadding(0,0,35,0);
         c.setChipBackgroundColor(ColorStateList.valueOf(ContextCompat.getColor(table.getContext(), R.color.teal_200)));
         c.setCheckedIconVisible(true);
@@ -325,6 +345,7 @@ public class HomeFragment extends Fragment {
             }
         });
     }
+
     public void setcheck(){
         if (sharedViewModel.checkstr == ""){
             return;

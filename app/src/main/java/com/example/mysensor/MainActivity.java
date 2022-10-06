@@ -43,6 +43,20 @@ public class MainActivity extends AppCompatActivity{
         txt.setText("");
         //txt.setText(SharedViewModel.statusstr);
 
+        /*binding.navView.setOnItemSelectedListener(item -> {
+            switch (item.getItemId()){
+                case R.id.navigation_home:
+                    txt.setText(getResources().getText(R.string.title_home));
+                    return true;
+                case R.id.navigation_dashboard:
+                    txt.setText(getResources().getText(R.string.title_dashboard));
+                    return true;
+                case R.id.navigation_notifications:
+                    txt.setText(getResources().getText(R.string.title_notifications));
+                    return true;
+            }
+            return false;
+        });*/
 
         //navView.listen
 
@@ -55,14 +69,6 @@ public class MainActivity extends AppCompatActivity{
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
 
-        /*MenuItem home = findViewById(R.id.navigation_home);
-        home.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem menuItem) {
-                txt.setText("aaa");
-                return false;
-            }
-        });*/
     }
 
     /*@Override

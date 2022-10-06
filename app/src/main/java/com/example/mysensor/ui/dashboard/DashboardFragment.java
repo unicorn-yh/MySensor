@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Button;
 
+import androidx.annotation.GravityInt;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -38,6 +40,12 @@ public class DashboardFragment extends Fragment {
 
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
+
+        root.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
 
         sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
         Log.i("DataActivity","SharedViewModel is Initialized.");
@@ -145,25 +153,27 @@ public class DashboardFragment extends Fragment {
                 //sensor name
                 TextView name = new TextView(table.getContext());
                 name.setText("Sensor "+Integer.toString(beforecount+j));
-                name.setLayoutParams(new TableRow.LayoutParams(160, GridLayout.LayoutParams.MATCH_PARENT));
+                name.setLayoutParams(new TableRow.LayoutParams(GridLayout.LayoutParams.MATCH_PARENT, GridLayout.LayoutParams.MATCH_PARENT));
                 name.setPadding(92,30,0,0);
-                name.setTextSize(20);
+                name.setTextSize(16);
                 name.setTypeface(null, Typeface.BOLD);
 
                 //intensity
                 EditText intensity = new EditText(table.getContext());
-                intensity.setLayoutParams(new TableRow.LayoutParams(145, GridLayout.LayoutParams.MATCH_PARENT));
-                intensity.setPadding(135,10,0,20);
-                intensity.setTextSize(20);
+                intensity.setLayoutParams(new TableRow.LayoutParams(GridLayout.LayoutParams.MATCH_PARENT, GridLayout.LayoutParams.MATCH_PARENT));
+                intensity.setPadding(0,10,0,20);
+                intensity.setTextSize(16);
                 intensity.setText("0");
+                intensity.setGravity(Gravity.CENTER);
                 intensity.setTypeface(null, Typeface.NORMAL);
 
                 //resistance
                 EditText resistance = new EditText(table.getContext());
-                resistance.setLayoutParams(new TableRow.LayoutParams(145, GridLayout.LayoutParams.MATCH_PARENT));
-                resistance.setPadding(80,10,0,20);
-                resistance.setTextSize(20);
+                resistance.setLayoutParams(new TableRow.LayoutParams(GridLayout.LayoutParams.MATCH_PARENT, GridLayout.LayoutParams.MATCH_PARENT));
+                resistance.setPadding(0,10,0,20);
+                resistance.setTextSize(16);
                 resistance.setText("0");
+                resistance.setGravity(Gravity.CENTER);
                 resistance.setTypeface(null, Typeface.NORMAL);
 
                 //add to row and table
