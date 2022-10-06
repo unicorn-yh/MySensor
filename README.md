@@ -12,3 +12,13 @@ A simple sensor mobile application for signal detection.
 | Oct 5, 2022ee | Connection between fragments  | Making a data-sharing class for connection between fragments. |
 | Oct 6, 2022   | Build and release apk         | Make last adjustment and generate apk from codes.            |
 
+
+
+#### Fragments functional overview
+
+| Title            | Fragments                                                    | Description                                                  |
+| ---------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Sensor           | ![image-20221006094130358](README/image-20221006094130358.png) | List of sensors assigned with tasks where signal detection is based on the data provided in the Data Fragment. The green chip allows the respective sensor to be switched on and off. Sensors would be doing task if it is switched on, where turns no signal when switched off or no signal detected. The yellow add button is to add sensors accordingly to the list for task executing. The purple update button is to update newest status of each sensor. |
+| Data Record      | ![image-20221006094139238](README/image-20221006094139238.png) | List of data records based on the sensors added in the Sensor Fragment. Updates on data would cause changes in the status of each sensor. |
+| Detection Record | ![image-20221006094144379](README/image-20221006094144379.png) | List of detection records having the name of sensors and the time of detections. |
+

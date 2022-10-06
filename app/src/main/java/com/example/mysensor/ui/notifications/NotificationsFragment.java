@@ -1,13 +1,22 @@
 package com.example.mysensor.ui.notifications;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.GridLayout;
+import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.divider.MaterialDivider;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -31,7 +40,7 @@ public class NotificationsFragment extends Fragment {
 
         binding = FragmentNotificationsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
-        binding.detect.setText(sharedViewModel.detectionstr);
+
         getDetectionRecord();
 
         //final TextView textView = binding.textNotifications;
@@ -46,24 +55,60 @@ public class NotificationsFragment extends Fragment {
     }
 
     public void getDetectionRecord(){
-        addRow();
-        fillInData();
+        int beforecount = addRow();
+        fillInData(beforecount);
     }
 
-    public void addRow(){
+    public int addRow(){
+        if(sharedViewModel.detectionstr == "" || sharedViewModel.detectiontime =="") return 0;
+        String[] device = sharedViewModel.detectionstr.split("[;]",0);
+        TableLayout table = binding.TableLayout3;
+        int beforecount = table.getChildCount();
+        for(int j=0;j< device.length;j++) {
+            TableRow tr = new TableRow(table.getContext());
+            tr.setLayoutParams(new TableRow.LayoutParams(GridLayout.LayoutParams.MATCH_PARENT, GridLayout.LayoutParams.MATCH_PARENT));
 
+            //detection msg
+            TextView msg = new TextView(table.getContext());
+            msg.setLayoutParams(new TableRow.LayoutParams(270, 90));
+            msg.setPadding(0, 5, 0, 0);
+            msg.setTextSize(20);
+            msg.setTextColor(Color.BLACK);
+
+            //detection time
+            TextView time = new TextView(table.getContext());
+            time.setLayoutParams(new TableRow.LayoutParams(GridLayout.LayoutParams.WRAP_CONTENT, GridLayout.LayoutParams.WRAP_CONTENT));
+            time.setTextSize(20);
+
+            //add to row and table
+            tr.addView(msg);
+            tr.addView(time);
+            table.addView(tr, new TableLayout.LayoutParams(GridLayout.LayoutParams.MATCH_PARENT, GridLayout.LayoutParams.MATCH_PARENT));
+
+            //add divider
+            MaterialDivider md = new MaterialDivider(table.getContext());
+            md.setLayoutParams(new AppBarLayout.LayoutParams(GridLayout.LayoutParams.MATCH_PARENT,6));
+            //table.addView(md, new TableLayout.LayoutParams(GridLayout.LayoutParams.MATCH_PARENT, GridLayout.LayoutParams.MATCH_PARENT));
+            table.addView(md);
+
+        }
+        return beforecount;
     }
 
-    public void fillInData(){
+    public void fillInData(int beforecount){
+        if(sharedViewModel.detectionstr == "" || sharedViewModel.detectiontime =="") return;
         String[] device = sharedViewModel.detectionstr.split("[;]",0);
         String[] dtime = sharedViewModel.detectiontime.split("[;]",0);
         TableLayout table = binding.TableLayout3;
-        for(int i=0;i<table.getChildCount();i++){
-            TableRow tr = (TableRow) table.getChildAt(i);
+        int num = 0;
+        for(int i=beforecount;i < table.getChildCount();i+=2){
+            View v = table.getChildAt(i);
+            if(v instanceof MaterialDivider) continue;
+            TableRow tr = (TableRow) v;
             TextView detection = (TextView) tr.getChildAt(0);
             TextView time = (TextView) tr.getChildAt(1);
-            detection.setText(device[i]);
-            time.setText(dtime[i]);
+            detection.setText("Sensor "+device[num]+" signal detected.");
+            time.setText(dtime[num++]);
         }
     }
 }
