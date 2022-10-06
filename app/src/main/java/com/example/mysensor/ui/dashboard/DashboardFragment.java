@@ -1,5 +1,7 @@
 package com.example.mysensor.ui.dashboard;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -40,12 +42,7 @@ public class DashboardFragment extends Fragment {
 
         binding = FragmentDashboardBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
-
-        root.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
+        //loadData();
 
         sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
         Log.i("DataActivity","SharedViewModel is Initialized.");
@@ -73,6 +70,7 @@ public class DashboardFragment extends Fragment {
         setupData();
         updateData();
         fillInData();
+        updateConstraint();
         //setSensorName();
 
         //final TextView textView = binding.textDashboard;
@@ -80,11 +78,30 @@ public class DashboardFragment extends Fragment {
         return root;
     }
 
-    /*@Override
+    @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-    }*/
+    }
+
+    public void saveData(){
+        SharedPreferences sp = this.getActivity().getSharedPreferences("MyUserPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putString("data",sharedViewModel.data);
+        editor.putInt("real_data_count",sharedViewModel.real_data_count);
+        editor.putInt("increment",sharedViewModel.increment);
+        editor.putString("intensity_constraint",sharedViewModel.intensity_constraint);
+        editor.putString("r_constraint",sharedViewModel.r_constraint);
+        editor.apply();
+        //Toast.makeText(this,"Data saved",Toast.LENGTH_SHORT).show();
+    }
+
+    public void loadData(){
+        SharedPreferences sp1 = this.getActivity().getApplicationContext().getSharedPreferences("MyUserPrefs",Context.MODE_PRIVATE);
+        sharedViewModel.real_data_count = sp1.getInt("real_data_count",0);
+        sharedViewModel.increment = sp1.getInt("increment",0);
+        sharedViewModel.data = sp1.getString("data","");
+    }
 
     public void setSensorName(){
         String namestr = binding.dataName.getText().toString();
@@ -139,6 +156,22 @@ public class DashboardFragment extends Fragment {
             t.setText(namearr[i-1]);
         }*/
 
+        EditText incons = binding.intensityConstraint;
+        EditText rcons = binding.rConstraint;
+        if(sharedViewModel.intensity_constraint != ""){
+            incons.setText(sharedViewModel.intensity_constraint);
+        }
+        else{
+            sharedViewModel.intensity_constraint = incons.getText().toString();
+        }
+        if(sharedViewModel.r_constraint != ""){
+            rcons.setText(sharedViewModel.r_constraint);
+        }
+        else{
+            sharedViewModel.r_constraint = rcons.getText().toString();
+        }
+
+
         int add_data_count = sharedViewModel.real_data_count;
         if(add_data_count == 0) return;
 
@@ -188,7 +221,8 @@ public class DashboardFragment extends Fragment {
             }
 
         }
-        binding.data.setText(sharedViewModel.data);
+        //saveData();
+        //binding.data.setText(sharedViewModel.data);
     }
 
     /*public void fillZero(){
@@ -230,7 +264,8 @@ public class DashboardFragment extends Fragment {
                 @Override
                 public void afterTextChanged(Editable editable) {
                     sharedViewModel.data = getData();
-                    binding.data.setText(sharedViewModel.data);
+                    saveData();
+                    //binding.data.setText(sharedViewModel.data);
                 }
             });
 
@@ -249,7 +284,8 @@ public class DashboardFragment extends Fragment {
                 @Override
                 public void afterTextChanged(Editable editable) {
                     sharedViewModel.data = getData();
-                    binding.data.setText(sharedViewModel.data);
+                    saveData();
+                    //binding.data.setText(sharedViewModel.data);
                     //send data to sensor
 
                 }
@@ -277,6 +313,49 @@ public class DashboardFragment extends Fragment {
             intensity.setText(arr[i-1][0]);
             resistance.setText(arr[i-1][1]);
         }
+    }
+
+    public void updateConstraint(){
+        EditText intensityConstraint = binding.intensityConstraint;
+        EditText rConstraint = binding.rConstraint;
+
+        //intensity constraint listener
+        intensityConstraint.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                sharedViewModel.intensity_constraint = intensityConstraint.getText().toString();
+                saveData();
+            }
+        });
+
+        //resistance constraint listener
+        rConstraint.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                sharedViewModel.r_constraint = rConstraint.getText().toString();
+                saveData();
+            }
+        });
     }
 
 }

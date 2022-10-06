@@ -1,5 +1,7 @@
 package com.example.mysensor.ui.home;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -23,6 +25,8 @@ import com.example.mysensor.SharedViewModel;
 import com.google.android.material.chip.*;
 import android.widget.GridLayout.LayoutParams;
 import android.content.res.ColorStateList;
+import android.widget.Toast;
+
 import androidx.core.content.ContextCompat;
 
 import java.text.DateFormat;
@@ -60,9 +64,13 @@ public class HomeFragment extends Fragment {
         View root = binding.getRoot();
         table = binding.tableLayout;
         sharedViewModel.increment = 0;
+        if(sharedViewModel.firstlaunch == 0){
+            loadData();
+            sharedViewModel.firstlaunch++;
+        }
 
         //set fragment to immersive mode
-        root.setSystemUiVisibility(
+        /*root.setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
@@ -75,7 +83,7 @@ public class HomeFragment extends Fragment {
             public void onSystemUiVisibilityChange(int i) {
                 binding.updatebtn2.performClick();
             }
-        });
+        });*/
 
 
         //get data from dashboard
@@ -112,6 +120,37 @@ public class HomeFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    public void saveData(){
+        SharedPreferences sp = this.getActivity().getSharedPreferences("MyUserPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putString("namestr",sharedViewModel.namestr);
+        editor.putString("statusstr", sharedViewModel.statusstr);
+        editor.putString("data",sharedViewModel.data);
+        editor.putString("detectionstr",sharedViewModel.detectionstr);
+        editor.putString("detectiontime",sharedViewModel.detectiontime);
+        editor.putString("checkstr",sharedViewModel.checkstr);
+        editor.putInt("real_data_count",sharedViewModel.real_data_count);
+        editor.putInt("increment",sharedViewModel.increment);
+        editor.putString("intensity_constraint",sharedViewModel.intensity_constraint);
+        editor.putString("r_constraint",sharedViewModel.r_constraint);
+        editor.apply();
+        //Toast.makeText(this,"Data saved",Toast.LENGTH_SHORT).show();
+    }
+
+    public void loadData(){
+        SharedPreferences sp1 = this.getActivity().getApplicationContext().getSharedPreferences("MyUserPrefs",Context.MODE_PRIVATE);
+        sharedViewModel.namestr = sp1.getString("namestr","");
+        sharedViewModel.statusstr = sp1.getString("statusstr","");
+        sharedViewModel.detectionstr = sp1.getString("detectionstr","");
+        sharedViewModel.detectiontime = sp1.getString("detectiontime","");
+        sharedViewModel.real_data_count = sp1.getInt("real_data_count",0);
+        sharedViewModel.increment = sp1.getInt("increment",0);
+        sharedViewModel.data = sp1.getString("data","");
+        sharedViewModel.checkstr = sp1.getString("checkstr","");
+        sharedViewModel.intensity_constraint = sp1.getString("intensity_constraint","");
+        sharedViewModel.r_constraint = sp1.getString("r_constraint","");
     }
 
     public String getStatus(){
@@ -158,13 +197,19 @@ public class HomeFragment extends Fragment {
                     Bundle result = new Bundle();
                     result.putString("df2", namestr);
                     getParentFragmentManager().setFragmentResult("dataName", result);
+                    saveData();
                 }
             });
         }
     }
 
     public boolean detectSignal(double intensity,double RR){
-        if (intensity<=650 && RR>=6){
+
+        if(sharedViewModel.intensity_constraint == "" || sharedViewModel.r_constraint == ""){
+            return false;
+        }
+
+        if (intensity<=Double.parseDouble(sharedViewModel.intensity_constraint) && RR>=Double.parseDouble(sharedViewModel.r_constraint)){
             return true;
         }
         return false;
@@ -232,6 +277,8 @@ public class HomeFragment extends Fragment {
                 sharedViewModel.statusstr += "No signal.;";
             }
         }
+        saveData();
+
     }
 
     public void sendTableSignal(){
@@ -272,6 +319,7 @@ public class HomeFragment extends Fragment {
                 sharedViewModel.checkstr += "false;";
             }
         }
+        saveData();
         //sharedViewModel.chips = Arrays.copyOf(chips, chips.length);
     }
 
@@ -285,6 +333,7 @@ public class HomeFragment extends Fragment {
                 sharedViewModel.increment++;
                 binding.scroll.fullScroll(View.FOCUS_DOWN);
                 setupChip();
+                saveData();
             }
         });
     }

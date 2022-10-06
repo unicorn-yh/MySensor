@@ -8,12 +8,14 @@
 
     <ScrollView
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent">
+        android:layout_height="fill_parent"
+        android:layout_marginBottom="30dp"
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:orientation="vertical" >
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/textView15"
@@ -28,6 +30,63 @@
                 android:textSize="24sp"
                 android:textStyle="bold|italic" />
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/textView29"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:paddingLeft="30dp"
+                    android:paddingTop="5dp"
+                    android:text="( Data constraint: Intensity &lt;="
+                    android:textColor="@color/design_default_color_error"
+                    android:textStyle="italic" />
+
+                <EditText
+                    android:id="@+id/intensity_constraint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:inputType="number"
+                    android:text="650"
+                    android:textColor="@color/design_default_color_error"
+                    android:textSize="14sp"
+                    android:textStyle="italic" />
+
+                <TextView
+                    android:id="@+id/textView33"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:text=", △R/R >="
+                    android:textColor="@color/design_default_color_error"
+                    android:textStyle="italic" />
+
+                <EditText
+                    android:id="@+id/r_constraint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:inputType="number"
+                    android:text="6"
+                    android:textColor="@color/design_default_color_error"
+                    android:textSize="14sp"
+                    android:textStyle="italic" />
+
+                <TextView
+                    android:id="@+id/textView35"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text=")"
+                    android:textColor="@color/design_default_color_error"
+                    android:textStyle="italic" />
+            </LinearLayout>
+
             <TableLayout
                 android:id="@+id/tableLayout2"
                 android:layout_width="match_parent"
@@ -41,7 +100,7 @@
 
                     <TextView
                         android:id="@+id/textView"
-                        android:layout_width="130dp"
+                        android:layout_width="110dp"
                         android:layout_height="match_parent"
                         android:paddingLeft="35dp"
                         android:paddingTop="10dp"
@@ -52,7 +111,7 @@
 
                     <TextView
                         android:id="@+id/textView16"
-                        android:layout_width="145dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:gravity="center"
                         android:paddingTop="10dp"
@@ -92,6 +151,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
+                        android:inputType="number"
                         android:paddingTop="10dp"
                         android:text="1200"
                         android:textSize="16sp"
@@ -103,10 +163,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
+                        android:inputType="number"
                         android:paddingTop="10dp"
                         android:text="0"
                         android:textSize="16sp"
-                        android:textStyle="normal" />
+                        android:textStyle="normal"
+                        tools:ignore="TouchTargetSizeCheck" />
                 </TableRow>
 
                 <TableRow
@@ -128,6 +190,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
+                        android:inputType="number"
                         android:paddingTop="10dp"
                         android:text="1000"
                         android:textSize="16sp"
@@ -138,10 +201,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
+                        android:inputType="number"
                         android:paddingTop="10dp"
                         android:text="1"
                         android:textSize="16sp"
-                        android:textStyle="normal" />
+                        android:textStyle="normal"
+                        tools:ignore="TouchTargetSizeCheck" />
                 </TableRow>
 
                 <TableRow
@@ -163,6 +228,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
+                        android:inputType="number"
                         android:paddingTop="10dp"
                         android:text="500"
                         android:textSize="16sp"
@@ -173,6 +239,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
+                        android:inputType="number"
                         android:paddingTop="10dp"
                         android:text="50"
                         android:textSize="16sp"
@@ -198,6 +265,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
+                        android:inputType="number"
                         android:paddingTop="10dp"
                         android:text="300"
                         android:textSize="16sp"
@@ -208,6 +276,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
+                        android:inputType="number"
                         android:paddingTop="10dp"
                         android:text="10"
                         android:textSize="16sp"
