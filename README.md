@@ -3,6 +3,8 @@ A simple sensor mobile application for signal detection.
 
 
 
+#### Progression Table
+
 | Date          | Progress                      | Description                                                  |
 | ------------- | ----------------------------- | ------------------------------------------------------------ |
 | Oct 3, 2022   | Information analysis          | Analyzing requirements for sensor and functions needed by mobile application. |
