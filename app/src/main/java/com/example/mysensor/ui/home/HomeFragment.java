@@ -255,7 +255,6 @@ public class HomeFragment extends Fragment {
 
     public void sendRowSignal(){
         //detectSignal
-
         //get data from dashboard
         int data_count = table.getChildCount();
         double[][] arr = new double[data_count][2];
