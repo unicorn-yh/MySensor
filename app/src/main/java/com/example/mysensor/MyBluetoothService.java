@@ -16,7 +16,7 @@ public class MyBluetoothService {
 
     // Defines several constants used when transmitting messages between the
     // service and the UI.
-    private interface MessageConstants {
+    public interface MessageConstants {
         public static final int MESSAGE_READ = 0;
         public static final int MESSAGE_WRITE = 1;
         public static final int MESSAGE_TOAST = 2;

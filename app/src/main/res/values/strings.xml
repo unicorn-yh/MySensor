@@ -6,4 +6,10 @@
     <string name="title_settings">Settings</string>
     <string name="bluetooth_not_supported">Bluetooth is not supported in this device.</string>
     <string name="ble_not_supported">Bluetooth LE is not supported in this device.</string>
+    <string name="unknown_service">Unknown service.</string>
+    <string name="unknown_characteristic">Unknown characteristic.</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="no_data">No Data</string>
+    <string name="unit">R Unit: Ohm</string>
 </resources>

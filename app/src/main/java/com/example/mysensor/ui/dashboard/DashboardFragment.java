@@ -2,19 +2,29 @@ package com.example.mysensor.ui.dashboard;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ListActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothServerSocket;
+import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
@@ -26,16 +36,23 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentResultListener;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.mysensor.R;
-import com.example.mysensor.SharedViewModel;
-import com.example.mysensor.databinding.FragmentDashboardBinding;
-
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import com.example.mysensor.MyBluetoothService;
+import com.example.mysensor.DeviceScanActivity;
+import com.example.mysensor.R;
+import com.example.mysensor.SharedViewModel;
+import com.example.mysensor.databinding.FragmentDashboardBinding;
+import com.example.mysensor.BluetoothLeService;
 
 public class DashboardFragment extends Fragment {
 
@@ -44,7 +61,13 @@ public class DashboardFragment extends Fragment {
     private Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
     private BluetoothAdapter BA;
     private Set<BluetoothDevice> pairedDevices;
-    private MyBluetoothService bs;
+    ArrayAdapter adapter = null;
+    LeDeviceListAdapter adapter2;
+    ArrayList list = new ArrayList();
+    ArrayList rlist = new ArrayList();
+    ConnectedThread connectedThread;
+    DeviceScanActivity DSA;
+    BluetoothLeService BLS;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -90,6 +113,7 @@ public class DashboardFragment extends Fragment {
         //fillInData();
         //updateConstraint();
         //setSensorName();
+        onBluetooth();
         connectBluetooth();
 
 
@@ -404,8 +428,9 @@ public class DashboardFragment extends Fragment {
         });
     }*/
 
-    public void connectBluetooth() {
+    public void onBluetooth() {
         BA = BluetoothAdapter.getDefaultAdapter();
+
         if (BA == null) {
             Toast.makeText(getActivity().getApplicationContext(), R.string.bluetooth_not_supported, Toast.LENGTH_SHORT).show();
             getActivity().finish();
@@ -424,8 +449,9 @@ public class DashboardFragment extends Fragment {
                             BTbtn.setBackgroundColor(getResources().getColor(R.color.teal_200));
                             BTbtn.setText("BLUETOOTH TURNED ON");
                             //visible();
-                            //list();
+                            list();
                             //binding.title.setText("Device: "+getLocalBluetoothName());
+                            //BluetoothSocket bs = BluetoothAdapter.LeScanCallback();
 
                         }
                     }
@@ -434,27 +460,29 @@ public class DashboardFragment extends Fragment {
         BTbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                try{
+                try {
                     String s = BTbtn.getText().toString();
                     if (s.contains("TURNED OFF") || s.contains("CONNECT")) {
                         Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                         //getActivity().startActivityForResult(turnOn, 0);
                         someActivityResultLauncher.launch(turnOn);
-                    }
-                    else {
+
+
+                    } else {
                         if (ActivityCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                             BA.disable();
-                            binding.title.setText("disable");
+                            //binding.title.setText("disable");
                             //Toast.makeText(getActivity().getApplicationContext(), "Turned off.", Toast.LENGTH_LONG).show();
                         }
-                        if(!BA.isEnabled()){
+                        if (true) {
                             BTbtn.setBackgroundColor(getResources().getColor(R.color.purple_500));
                             BTbtn.setText("BLUETOOTH TURNED OFF");
-
+                            list.clear();
+                            adapter = new ArrayAdapter(getActivity().getApplicationContext(), android.R.layout.simple_list_item_1, list);
+                            binding.devicelist.setAdapter(adapter);
                         }
                     }
-                }
-                catch(Exception e){
+                } catch (Exception e) {
                     Toast.makeText(getActivity().getApplicationContext(), "Connection error.", Toast.LENGTH_LONG).show();
                 }
 
@@ -483,14 +511,111 @@ public class DashboardFragment extends Fragment {
     public void list() {
         if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             pairedDevices = BA.getBondedDevices();
-            ArrayList list = new ArrayList();
-            for (BluetoothDevice bt : pairedDevices){
+            for (BluetoothDevice bt : pairedDevices) {
                 list.add(bt.getName());
             }
             Toast.makeText(getActivity().getApplicationContext(), "Showing Paired Devices", Toast.LENGTH_SHORT).show();
-            final ArrayAdapter adapter = new ArrayAdapter(getActivity().getApplicationContext(), android.R.layout.simple_list_item_1, list);
+            adapter = new ArrayAdapter(getActivity().getApplicationContext(), android.R.layout.simple_list_item_1, list);
             binding.devicelist.setAdapter(adapter);
+            /*LeDeviceListAdapter adapter2 = new LeDeviceListAdapter();
+            DSA.scanLeDevice(true);
+            binding.devicelist.setAdapter(adapter2);
+            adapter2.clear();*/
         }
+
+        binding.devicelist.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                try{
+                    BluetoothGatt gatt;
+                    binding.statusText.setText("Connected");
+                    Iterator<BluetoothDevice> itr = pairedDevices.iterator();
+                    BluetoothDevice device = null;
+                    for (int i = 0; itr.hasNext(); i++) {
+                        device = itr.next();
+                        if (i == position) {
+                            break;
+                        }
+                    }
+                    if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                        // TODO: Consider calling
+                        //    ActivityCompat#requestPermissions
+                        // here to request the missing permissions, and then overriding
+                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                        //                                          int[] grantResults)
+                        // to handle the case where the user grants the permission. See the documentation
+                        // for ActivityCompat#requestPermissions for more details.
+                        //return;
+                    }
+                    //binding.title.setText("");
+                    binding.statusText.setText(device.getName()+" connected");
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                        binding.statusText.setText("Connected");
+                        Toast.makeText(getActivity().getApplicationContext(), device.getName()+" connected.", Toast.LENGTH_SHORT).show();
+                        rlist();
+                        //gatt = device.connectGatt(getActivity().getApplicationContext(), true, BLS.mGattCallback);
+                    }
+
+                }
+                catch (Exception e){
+                    binding.statusText.setText("Connected");
+                    Toast.makeText(getActivity().getApplicationContext(), "Connection error.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        /*binding.devicelist.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+
+                binding.title.setText("0");
+                    binding.title.setText("00");
+                    BluetoothGatt gatt;
+                    binding.title.setText("1");
+                    int pos = adapter.getPosition(this);
+                    binding.title.setText("2");
+                    binding.statusText.setText("Connected");
+                    binding.title.setText("3");
+                    Iterator<BluetoothDevice> itr = pairedDevices.iterator();
+                    binding.title.setText("4");
+                    BluetoothDevice device = null;
+                    binding.title.setText("5");
+                    for (int i = 0; itr.hasNext(); i++) {
+                        device = itr.next();
+                        if (i == 1) {
+                            break;
+                        }
+                    }
+                    binding.title.setText("6");
+                    if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                        // TODO: Consider calling
+                        //    ActivityCompat#requestPermissions
+                        // here to request the missing permissions, and then overriding
+                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                        //                                          int[] grantResults)
+                        // to handle the case where the user grants the permission. See the documentation
+                        // for ActivityCompat#requestPermissions for more details.
+                        //return;
+                    }
+                    binding.title.setText("7");
+                    binding.title.setText(device.getName());
+                //gatt = device.connectGatt(getActivity().getApplicationContext(), false, mGattCallback);
+            }
+        });*/
+
+        /*catch (Exception e) {
+            Toast.makeText(getActivity().getApplicationContext(), "Connection error.", Toast.LENGTH_SHORT).show();
+        }*/
+
+    }
+
+    public void rlist(){
+        rlist.add(10);
+        rlist.add(6);
+        //Toast.makeText(getActivity().getApplicationContext(), "Showing Paired Devices", Toast.LENGTH_SHORT).show();
+        adapter = new ArrayAdapter(getActivity().getApplicationContext(), android.R.layout.simple_list_item_1, rlist);
+        binding.rlist.setAdapter(adapter);
     }
 
     public String getLocalBluetoothName() {
@@ -498,14 +623,301 @@ public class DashboardFragment extends Fragment {
         if (BA == null) {
             BA = BluetoothAdapter.getDefaultAdapter();
         }
-        String name="";
+        String name = "";
         if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             name = BA.getName();
         }
-        if(name == null){
+        if (name == null) {
             name = BA.getAddress();
         }
         return name;
     }
 
+    public void connectBluetooth() {
+
+    }
+
+
+    private static final String TAG = "MYSENSOR";
+    //private Handler handlers; // handler that gets info from Bluetooth service
+
+    static final int STATE_LISTENING = 1;
+    static final int STATE_CONNECTING = 2;
+    static final int STATE_CONNECTED = 3;
+    static final int STATE_CONNECTION_FAILED = 4;
+    static final int STATE_MESSAGE_RECEIVED = 5;
+
+
+    Handler handler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            switch (msg.what) {
+                case STATE_LISTENING:
+                    binding.statusText.setText("Listening");
+                    break;
+                case STATE_CONNECTING:
+                    binding.statusText.setText("Connecting");
+                    break;
+                case STATE_CONNECTED:
+                    binding.statusText.setText("Connected");
+                    break;
+                case STATE_CONNECTION_FAILED:
+                    binding.statusText.setText("Connection Failed");
+                    break;
+                case STATE_MESSAGE_RECEIVED:
+                    byte[] readBuff = (byte[]) msg.obj;
+                    String tempMsg = new String(readBuff, 0, msg.arg1);
+                    //binding.title.setText(tempMsg);
+                    break;
+            }
+            return true;
+        }
+    });
+
+    // Defines several constants used when transmitting messages between the
+    // service and the UI.
+    private interface MessageConstants {
+        public static final int MESSAGE_READ = 0;
+        public static final int MESSAGE_WRITE = 1;
+        public static final int MESSAGE_TOAST = 2;
+
+        // ... (Add other message types here as needed.)
+    }
+
+    private class ConnectedThread extends Thread {
+        private final BluetoothSocket mmSocket;
+        private final InputStream mmInStream;
+        private final OutputStream mmOutStream;
+        private byte[] mmBuffer; // mmBuffer store for the stream
+
+        public ConnectedThread(BluetoothSocket socket) {
+            mmSocket = socket;
+            InputStream tmpIn = null;
+            OutputStream tmpOut = null;
+
+            // Get the input and output streams; using temp objects because
+            // member streams are final.
+            try {
+                tmpIn = socket.getInputStream();
+            } catch (IOException e) {
+                Log.e(TAG, "Error occurred when creating input stream", e);
+            }
+            try {
+                tmpOut = socket.getOutputStream();
+            } catch (IOException e) {
+                Log.e(TAG, "Error occurred when creating output stream", e);
+            }
+
+            mmInStream = tmpIn;
+            mmOutStream = tmpOut;
+        }
+
+        public void run() {
+            mmBuffer = new byte[1024];
+            int numBytes; // bytes returned from read()
+
+            // Keep listening to the InputStream until an exception occurs.
+            while (true) {
+                try {
+                    // Read from the InputStream.
+                    numBytes = mmInStream.read(mmBuffer);
+                    // Send the obtained bytes to the UI activity.
+                    Message readMsg = handler.obtainMessage(
+                            MessageConstants.MESSAGE_READ, numBytes, -1,
+                            mmBuffer);
+                    readMsg.sendToTarget();
+
+                } catch (IOException e) {
+                    Log.d(TAG, "Input stream was disconnected", e);
+                    break;
+                }
+            }
+        }
+
+        // Call this from the main activity to send data to the remote device.
+        public void write(byte[] bytes) {
+            try {
+                mmOutStream.write(bytes);
+
+                // Share the sent message with the UI activity.
+                Message writtenMsg = handler.obtainMessage(
+                        MessageConstants.MESSAGE_WRITE, -1, -1, mmBuffer);
+                writtenMsg.sendToTarget();
+            } catch (IOException e) {
+                Log.e(TAG, "Error occurred when sending data", e);
+
+                // Send a failure message back to the activity.
+                Message writeErrorMsg =
+                        handler.obtainMessage(MessageConstants.MESSAGE_TOAST);
+                Bundle bundle = new Bundle();
+                bundle.putString("toast",
+                        "Couldn't send data to the other device");
+                writeErrorMsg.setData(bundle);
+                handler.sendMessage(writeErrorMsg);
+            }
+        }
+
+        // Call this method from the main activity to shut down the connection.
+        public void cancel() {
+            try {
+                mmSocket.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Could not close the connect socket", e);
+            }
+        }
+    }
+
+    private class ServerClass extends Thread {
+        private BluetoothServerSocket serverSocket;
+
+        public ServerClass() {
+            try {
+                if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                    // TODO: Consider calling
+                    //    ActivityCompat#requestPermissions
+                    // here to request the missing permissions, and then overriding
+                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                    //                                          int[] grantResults)
+                    // to handle the case where the user grants the permission. See the documentation
+                    // for ActivityCompat#requestPermissions for more details.
+
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    serverSocket = BA.listenUsingL2capChannel();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void run() {
+            BluetoothSocket socket = null;
+
+            while (socket == null) {
+                try {
+                    Message message = Message.obtain();
+                    message.what = STATE_CONNECTING;
+                    handler.sendMessage(message);
+
+                    socket = serverSocket.accept();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Message message = Message.obtain();
+                    message.what = STATE_CONNECTION_FAILED;
+                    handler.sendMessage(message);
+                }
+
+                if (socket != null) {
+                    Message message = Message.obtain();
+                    message.what = STATE_CONNECTED;
+                    handler.sendMessage(message);
+
+                    connectedThread = new ConnectedThread(socket);
+                    connectedThread.start();
+
+                    break;
+                }
+            }
+        }
+    }
+
+    class BleDefinedUUIDs {
+        //Service对应的UUID
+        class Service {
+            final UUID BLE_SERVICE = UUID.fromString("0000fff0-0000-1000-8000-00805f9b34fb");
+        }
+
+        ;
+
+        class Characteristic {
+            //characteristic的UUID
+//        final static public UUID HEART_RATE_MEASUREMENT   = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb");
+            final UUID BLE_SERVICE_READ = UUID.fromString("0000fff4-0000-1000-8000-00805f9b34fb");
+            final public UUID MANUFACTURER_STRING = UUID.fromString("00002a29-0000-1000-8000-00805f9b34fb");
+            final public UUID MODEL_NUMBER_STRING = UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb");
+            final public UUID FIRMWARE_REVISION_STRING = UUID.fromString("00002a26-0000-1000-8000-00805f9b34fb");
+            final public UUID APPEARANCE = UUID.fromString("00002a01-0000-1000-8000-00805f9b34fb");
+            final public UUID BODY_SENSOR_LOCATION = UUID.fromString("00002a38-0000-1000-8000-00805f9b34fb");
+        }
+
+        class Descriptor {
+            final UUID CHAR_CLIENT_CONFIG = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+        }
+    }
+
+    // Adapter for holding devices found through scanning.
+    private class LeDeviceListAdapter extends BaseAdapter {
+        private ArrayList<BluetoothDevice> mLeDevices;
+        private LayoutInflater mInflator;
+
+        public LeDeviceListAdapter() {
+            super();
+            mLeDevices = new ArrayList<BluetoothDevice>();
+            //mInflator = DeviceScanActivity.this.getLayoutInflater();
+        }
+
+        public void addDevice(BluetoothDevice device) {
+            if (!mLeDevices.contains(device)) {
+                mLeDevices.add(device);
+            }
+        }
+
+        public BluetoothDevice getDevice(int position) {
+            return mLeDevices.get(position);
+        }
+
+        public void clear() {
+            mLeDevices.clear();
+        }
+
+        @Override
+        public int getCount() {
+            return mLeDevices.size();
+        }
+
+        @Override
+        public Object getItem(int i) {
+            return mLeDevices.get(i);
+        }
+
+        @Override
+        public long getItemId(int i) {
+            return i;
+        }
+
+        @Override
+        public View getView(int i, View view, ViewGroup viewGroup) {
+            RecyclerView.ViewHolder viewHolder = null;
+            // General ListView optimization code.
+            /*if (view == null) {
+                view = mInflator.inflate(R.layout.listitem_device, null);
+                viewHolder = new ViewHolder();
+                viewHolder.deviceAddress = (TextView) view.findViewById(R.id.device_address);
+                viewHolder.deviceName = (TextView) view.findViewById(R.id.device_name);
+                view.setTag(viewHolder);
+            } else {
+                viewHolder = (ViewHolder) view.getTag();
+            }*/
+
+            BluetoothDevice device = mLeDevices.get(i);
+            if (ActivityCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+
+            }
+            final String deviceName = device.getName();
+            /*if (deviceName != null && deviceName.length() > 0)
+                viewHolder.deviceName.setText(deviceName);
+            else
+                viewHolder.deviceName.setText(R.string.unknown_device);
+            viewHolder.deviceAddress.setText(device.getAddress());*/
+
+            return view;
+        }
+    }
 }
