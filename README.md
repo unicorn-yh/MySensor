@@ -1,5 +1,5 @@
 # MySensor
-A simple sensor mobile application for signal detection which get Bluetooth signals from a multimeter.
+A simple mobile application for signal detection which get Bluetooth signals from a multimeter.
 
 
 
